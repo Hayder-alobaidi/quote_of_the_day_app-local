@@ -1,21 +1,23 @@
 import pika
-import os
+import json
 
 class RabbitMQConsumer:
-    def __init__(self, callback):
-        self.rabbitmq_url = os.getenv('CLOUDAMQP_URL', 'amqps://rhhvlgxm:qUM7u0oJtYvNBS-csko-RAbc9AXxAEEL@fish.rmq.cloudamqp.com/rhhvlgxm')
-        self.queue_name = 'quote_queue'
+    def __init__(self, amqp_url, queue_name, callback):
+        self.amqp_url = amqp_url
+        self.queue_name = queue_name
         self.callback = callback
+        self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_url))
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue=self.queue_name, durable=True)
+        self.channel.basic_consume(queue=self.queue_name, on_message_callback=self.callback, auto_ack=True)
 
     def start_listening(self):
-        params = pika.URLParameters(self.rabbitmq_url)
-        connection = pika.BlockingConnection(params)
-        channel = connection.channel()
-        channel.queue_declare(queue=self.queue_name)
+        try:
+            self.channel.start_consuming()
+        except KeyboardInterrupt:
+            self.channel.stop_consuming()
+        self.connection.close()
 
-        channel.basic_consume(queue=self.queue_name,
-                              on_message_callback=self.callback,
-                              auto_ack=True)
-
-        print("Starting to consume from RabbitMQ")
-        channel.start_consuming()
+    def stop_listening(self):
+        self.channel.stop_consuming()
+        self.connection.close()

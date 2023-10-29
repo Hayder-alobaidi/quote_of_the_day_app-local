@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 import random
+from rabbitmq_publisher import RabbitMQPublisher
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quotes.db'
@@ -11,13 +12,16 @@ class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(500), nullable=False)
 
-# Endpoint to get a all quotes
+# Update this URL with your RabbitMQ server URL
+rabbitmq_url = "amqp://admin:admin@localhost:5672/"
+rabbitmq_publisher = RabbitMQPublisher(rabbitmq_url)
+
+# Endpoint to get all quotes
 @app.route('/quotes', methods=['GET'])
 def get_all_quotes():
     all_quotes = Quote.query.all()
     quotes_list = [{'id': quote.id, 'text': quote.text} for quote in all_quotes]
     return jsonify(quotes_list)
-
 
 # Endpoint to get a random quote
 @app.route('/quote', methods=['GET'])
@@ -25,6 +29,8 @@ def get_random_quote():
     quotes = Quote.query.all()
     random_quote = random.choice(quotes) if quotes else None
     if random_quote:
+        # Notify the analytics service via RabbitMQ
+        rabbitmq_publisher.notify_analytics_service(random_quote.id)
         return jsonify({'id': random_quote.id, 'text': random_quote.text})
     return jsonify({'message': 'No quotes available'})
 
@@ -61,4 +67,8 @@ def delete_quote(id):
     return jsonify({'message': 'Quote deleted'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    try:
+        app.run(debug=True, port=5000)
+    finally:
+        # Ensure the RabbitMQ connection is closed on app shutdown
+        rabbitmq_publisher.close_connection()
