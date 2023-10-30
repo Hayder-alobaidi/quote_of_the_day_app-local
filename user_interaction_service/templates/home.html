@@ -21,25 +21,30 @@
     <script>
         function fetchQuote() {
             $.get('/quote', function(data) {
-                var quoteHtml = `<blockquote class="blockquote"><p class="mb-0">${data.text}</p></blockquote>`;
-                fetchQuoteCount(data.id, quoteHtml);
+                var quoteHtml = `<blockquote class="blockquote"><p class="mb-0">${data.text}</p>`;
+                if (data.current_count !== undefined) {
+                    quoteHtml += `<footer>This quote has been shown ${data.current_count} times.</footer>`;
+                } else {
+                    quoteHtml += `<footer>This quote count is currently unavailable.</footer>`;
+                }
+                quoteHtml += `</blockquote>`;
+                $('#quote-box').html(quoteHtml);
             }).fail(function() {
                 $('#quote-box').text('Failed to load quote. Try again?');
             });
         }
 
-        function fetchQuoteCount(quoteId, quoteHtml) {
-            // Assuming the analytics service is running on port 5001
-            $.get(`http://localhost:5001/count/${quoteId}`, function(countData) {
-                $('#quote-box').html(quoteHtml + `<footer>This quote has been shown ${countData.current_count} times.</footer>`);
-            }).fail(function() {
-                $('#quote-box').html(quoteHtml + `<footer>This quote count is currently unavailable.</footer>`);
-            });
-        }
-
         $(document).ready(function() {
             fetchQuote();
-            $('#new-quote').click(fetchQuote);
+            $('#new-quote').click(function() {
+                fetchQuote();
+                $(this).prop('disabled', true); // Disable the button
+
+                // Enable the button after 5 seconds
+                setTimeout(function() {
+                    $('#new-quote').prop('disabled', false);
+                }, 2000); // 2000 milliseconds = 2 seconds
+            });
         });
     </script>
 </body>

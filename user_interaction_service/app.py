@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, render_template
 import requests
 
 app = Flask(__name__)
@@ -16,19 +16,25 @@ def get_quote():
     quote_response = requests.get(f"{quote_service_url}/quote")
     if quote_response.status_code == 200:
         quote_data = quote_response.json()
-        quote_id = quote_data.get('id')
-        return quote_data
+        quote_id = quote_data['id']
+
+        # Get count data for the received quote ID from the Analytics Service
+        analytics_response = requests.get(f"{analytics_service_url}/count/{quote_id}")
+        if analytics_response.status_code == 200:
+            count_data = analytics_response.json()
+            current_count = count_data['current_count']
+        else:
+            current_count = "Unavailable"
+
+        # Combine quote and count data
+        combined_data = {
+            "id": quote_id,
+            "text": quote_data['text'],
+            "current_count": current_count
+        }
+        return jsonify(combined_data)
     else:
         return jsonify({"error": "Quote service is unavailable"}), 503
-
-@app.route('/count/<int:quote_id>', methods=['GET'])
-def get_quote_count(quote_id):
-    # Get count data for a specific quote from the Analytics Service
-    analytics_response = requests.get(f"{analytics_service_url}/count/{quote_id}")
-    if analytics_response.status_code == 200:
-        return analytics_response.json()
-    else:
-        return jsonify({"error": "Analytics service is unavailable or quote not found"}), analytics_response.status_code
 
 if __name__ == '__main__':
     app.run(debug=True, port=5002, host='0.0.0.0')
