@@ -56,9 +56,11 @@ def start_rabbitmq_listener():
         if quote_id is not None:
             increment_quote_count_from_message(quote_id)
 
-    # Update this URL with your RabbitMQ server URL
+    # The RabbitMQ URL matching with the Quote Service
     rabbitmq_url = "amqp://admin:admin@localhost:5672/"
-    rabbitmq_consumer = RabbitMQConsumer(rabbitmq_url, callback=callback)
+
+    # Queue name is specified for the RabbitMQConsumer
+    rabbitmq_consumer = RabbitMQConsumer(rabbitmq_url, 'quote_notifications', callback=callback)
     rabbitmq_consumer.start_listening()
 
 if __name__ == "__main__":
