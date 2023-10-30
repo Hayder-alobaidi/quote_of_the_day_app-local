@@ -14,17 +14,7 @@ class QuoteCount(db.Model):
     quote_id = db.Column(db.Integer, unique=True)
     count = db.Column(db.Integer, default=0)
 
-@app.route('/increment/<int:quote_id>', methods=['POST'])
-def increment_quote_count(quote_id):
-    record = QuoteCount.query.filter_by(quote_id=quote_id).first()
-    if record:
-        record.count += 1
-    else:
-        record = QuoteCount(quote_id=quote_id, count=1)
-        db.session.add(record)
-    db.session.commit()
-    return jsonify({"message": "Count incremented for quote {}".format(quote_id), "current_count": record.count})
-
+#This endpint will be used by user-intervice service to serive the conount of each quote
 @app.route('/count/<int:quote_id>', methods=['GET'])
 def get_quote_count(quote_id):
     record = QuoteCount.query.filter_by(quote_id=quote_id).first()
@@ -33,6 +23,7 @@ def get_quote_count(quote_id):
     else:
         return jsonify({"message": "No record found for quote {}".format(quote_id)}), 404
 
+#This endpint will be used by user-intervice service to serive the conount of all quotes
 @app.route('/counts', methods=['GET'])
 def get_all_counts():
     records = QuoteCount.query.all()

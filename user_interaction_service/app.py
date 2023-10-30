@@ -3,8 +3,8 @@ import requests
 
 app = Flask(__name__)
 
-quote_service_url = 'http://localhost:5000/random'  # URL of the Quote Service
-analytics_service_url = 'http://localhost:5001'  # URL of the Analytics Service
+quote_service_url = 'http://localhost:5000/quote'  # URL of the Quote Service
+analytics_service_url = 'http://localhost:5001/count'  # URL of the Analytics Service
 
 @app.route('/quote', methods=['GET'])
 def get_quote():
