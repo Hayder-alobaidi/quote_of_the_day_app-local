@@ -64,6 +64,10 @@ def delete_quote(id):
     quote = Quote.query.get_or_404(id)
     db.session.delete(quote)
     db.session.commit()
+    
+    # Notify the analytics service that a quote was deleted
+    rabbitmq_publisher.notify_quote_deletion(id)
+
     return jsonify({'message': 'Quote deleted'})
 
 if __name__ == '__main__':

@@ -17,9 +17,9 @@ class RabbitMQPublisher:
             logging.error(f"Error connecting to RabbitMQ: {error}")
             # Optional: implement some delay or retry logic here
 
-    def notify_analytics_service(self, quote_id):
+    def notify_analytics_service(self, quote_id, action='increment'):
         try:
-            message = json.dumps({'quote_id': quote_id})
+            message = json.dumps({'quote_id': quote_id, 'action': action})
             self.channel.basic_publish(
                 exchange='',
                 routing_key=self.queue_name,
@@ -34,6 +34,9 @@ class RabbitMQPublisher:
             # Optional: Retry publishing the message here after reconnecting
             # Be cautious to avoid infinite retry loops
 
+    def notify_quote_deletion(self, quote_id):
+        self.notify_analytics_service(quote_id, action='delete')
+
     def reconnect(self):
         if self.connection and not self.connection.is_closed:
             self.connection.close()
@@ -43,5 +46,5 @@ class RabbitMQPublisher:
         if self.connection and not self.connection.is_closed:
             self.connection.close()
 
-# Usage remains the same in your Flask application
+# Usage:
 # rabbitmq_publisher = RabbitMQPublisher(your_amqp_url)
