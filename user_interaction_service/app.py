@@ -10,10 +10,6 @@ analytics_service_url = 'http://localhost:5001'  # URL of the Analytics Service
 def home():
     return render_template('home.html')
 
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
-
 @app.route('/quote', methods=['GET'])
 def get_quote():
     # Get a random quote from the Quote Service

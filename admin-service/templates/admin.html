@@ -43,6 +43,9 @@
                 method: 'DELETE',
                 success: function() {
                     fetchQuotes();
+                },
+                error: function() {
+                    alert("Error in deleting quote.");
                 }
             });
         }
@@ -62,6 +65,9 @@
                 data: JSON.stringify({ text: text }),
                 success: function() {
                     fetchQuotes();
+                },
+                error: function() {
+                    alert("Error in updating quote.");
                 }
             });
         }
@@ -73,11 +79,18 @@
                 event.preventDefault();
                 var newText = $('#new-quote-text').val().trim();
                 if (newText) {
-                    $.post('/admin/quotes', JSON.stringify({ text: newText }), function() {
-                        $('#new-quote-text').val('');
-                        fetchQuotes();
-                    }, 'json').fail(function() {
-                        alert('Failed to add new quote.');
+                    $.ajax({
+                        url: '/admin/quotes',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ text: newText }),
+                        success: function() {
+                            $('#new-quote-text').val('');
+                            fetchQuotes();
+                        },
+                        error: function(xhr) {
+                            alert('Error adding quote: ' + xhr.responseText);
+                        }
                     });
                 }
             });
